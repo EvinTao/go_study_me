@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -212,14 +213,14 @@ func main() {
 	//println(comma("1234567890"))
 	//fmt.Println(intsToString([]int{1, 2, 3}))
 
-	//x := 123
-	//y := fmt.Sprintf("%d", x)
-	//fmt.Println(y, strconv.Itoa(x))
+	x := 123
+	y := fmt.Sprintf("%d", x)
+	fmt.Println(y, strconv.Itoa(x))
 	//fmt.Println(strconv.FormatInt(int64(x), 2))
 
 	//array1()
 	//make2new()
 	//modify()
-	//slice()
+	slice()
 	structDemo()
 }
