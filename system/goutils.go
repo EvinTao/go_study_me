@@ -12,6 +12,10 @@ import (
 	"github.com/shirou/gopsutil/net"
 )
 
+var lastBytesSent uint64
+var lastBytesRecv uint64
+var lastTime time.Time
+
 // cpu info
 func GetCpuInfo() {
 	cpuInfos, err := cpu.Info()
@@ -29,22 +33,30 @@ func GetCpuInfo() {
 }
 
 func formatF(f1 float64) string {
-	return fmt.Sprintf("%f.2", f1)
+	ret := fmt.Sprintf("%.2f", f1/1024/1024)
+	return ret
 }
 
-func formatMB(by uint64) string {
-	return fmt.Sprintf("%d MB", by/1024/1024)
+func formatMem(f1 uint64) string {
+	if f1 >= 1014*1024*1024 {
+		return fmt.Sprintf("%.1fG", float64(f1)/1024/1024/1024)
+	} else if f1 > 1014*1024 && f1 < 1014*1024*1024 {
+		return fmt.Sprintf("%dM", f1/1024/1024)
+	} else {
+		return fmt.Sprintf("%dK", f1/1024)
+	}
 }
 
-func GetCpuLoad() {
+func GetCpuLoad() string {
 	info, _ := load.Avg()
-	fmt.Printf("CpuLoad: %s %s %s\n", formatF(info.Load1), formatF(info.Load5), formatF(info.Load15))
+	ret := fmt.Sprintf("%.2f %.2f %.2f", info.Load1, info.Load5, info.Load15)
+	return ret
 }
 
 // mem info
-func GetMemInfo() {
+func GetMemInfo() string {
 	memInfo, _ := mem.VirtualMemory()
-	fmt.Printf("mem info:%s free:%d\n", formatF(memInfo.UsedPercent), memInfo.Free)
+	return fmt.Sprintf("%s %s %s %s", formatMem(memInfo.Used), formatMem(memInfo.Buffers), formatMem(memInfo.Cached), formatMem(memInfo.Free))
 }
 
 // host info
@@ -72,13 +84,23 @@ func GetDiskInfo() {
 	}
 }
 
-func GetNetInfo() {
+func GetNetInfo() string {
 	info, _ := net.IOCounters(true)
-	for index, v := range info {
-		if v.Name == "en0" {
-			fmt.Printf("net :%v send:%v recv:%v\n", index, formatMB(v.BytesSent), formatMB(v.BytesRecv))
+	for _, v := range info {
+		if v.Name == "eth0" {
+			bytesSent := v.BytesSent
+			bytesRecv := v.BytesRecv
+			if lastBytesSent != 0 && lastBytesRecv != 0 {
+				second := uint64(time.Now().Sub(lastTime).Seconds())
+				sentSpeed := (bytesSent - lastBytesSent) / 1024 / second
+				recvSpeed := (bytesRecv - lastBytesRecv) / 1024 / second
+				return fmt.Sprintf("%dk %dk", sentSpeed, recvSpeed)
+			}
+			lastBytesSent = bytesSent
+			lastBytesRecv = bytesRecv
+			lastTime = time.Now()
 			break
 		}
 	}
-	time.Sleep(time.Second)
+	return "0k 0k"
 }

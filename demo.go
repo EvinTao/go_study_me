@@ -1,7 +1,6 @@
 package main
 
 import (
-	utils "evintao.com/study/system"
 	"fmt"
 	"go.uber.org/zap"
 	"os"
@@ -13,11 +12,8 @@ import (
 func process() {
 	for {
 		fmt.Println("--------------->")
-		utils.GetCpuLoad()
-		//go utils.GetCpuInfo()
-		utils.GetMemInfo()
-		utils.GetNetInfo()
-		time.Sleep(time.Second)
+
+		time.Sleep(2 * time.Second)
 	}
 }
 
@@ -27,9 +23,11 @@ func main() {
 
 	startT := time.Now()
 
-	zap.S().Info("start ----> ")
+	zap.S().Info("#start ----> ")
 
 	go process()
+
+	//go speed()
 
 	//接收终止信号 Signal表示操作系统信号
 	quit := make(chan os.Signal)
@@ -37,5 +35,5 @@ func main() {
 	//接收control+c
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	<-quit
-	zap.S().Infof("-----------> done, serve %v", time.Since(startT))
+	zap.S().Infof("#-----------> done, serve %v", time.Since(startT))
 }
